@@ -1,0 +1,6 @@
+{
+  "name": "Solarex - Solana Wallet",
+  "description": "Mobile-first Solana wallet with Solarex loading animation, 12-word seed phrase generation from 20 rotating possibilities, airdrop balance, and non-custodial wallet management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

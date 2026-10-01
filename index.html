@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Safeguard against browser wallet extension conflicts (MetaMask, Phantom, Coinbase, Rabby, etc.)
+      // in cross-origin / sandboxed iframes
+      (function() {
+        const isWalletExtensionError = function(msg, filename, stack) {
+          const text = [msg, filename, stack].filter(Boolean).join(' ');
+          return (
+            text.includes('Failed to connect to MetaMask') ||
+            text.includes('MetaMask') ||
+            text.includes('Cannot redefine property: ethereum') ||
+            text.includes('Cannot redefine property: solana') ||
+            text.includes('Cannot redefine property') ||
+            text.includes('chrome-extension://') ||
+            text.includes('moz-extension://') ||
+            text.includes('inpage.js')
+          );
+        };
+
+        window.addEventListener('error', function(event) {
+          const msg = event && (event.message || (event.error && event.error.message)) || '';
+          const filename = (event && event.filename) || '';
+          const stack = (event && event.error && event.error.stack) || '';
+          if (isWalletExtensionError(msg, filename, stack)) {
+            event.stopImmediatePropagation();
+            event.stopPropagation();
+            event.preventDefault();
+            return true;
+          }
+        }, true);
+
+        window.addEventListener('unhandledrejection', function(event) {
+          const reason = event && event.reason;
+          const msg = typeof reason === 'string' ? reason : (reason && reason.message) || '';
+          const stack = (reason && reason.stack) || '';
+          if (isWalletExtensionError(msg, '', stack)) {
+            event.stopImmediatePropagation();
+            event.stopPropagation();
+            event.preventDefault();
+            return true;
+          }
+        }, true);
+
+        const origDefineProperty = Object.defineProperty;
+        Object.defineProperty = function(obj, prop, descriptor) {
+          if (obj === window && (prop === 'ethereum' || prop === 'solana')) {
+            try {
+              return origDefineProperty.call(Object, obj, prop, {
+                ...descriptor,
+                configurable: true
+              });
+            } catch (err) {
+              return obj;
+            }
+          }
+          return origDefineProperty.apply(Object, arguments);
+        };
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#090a0f" />
+    <meta name="application-name" content="Solarex" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Solarex" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="msapplication-TileColor" content="#090a0f" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+    <title>Solarex — Self-Custodial Solana Wallet & Digital Treasury Infrastructure</title>
+    <meta name="description" content="Mobile-first Solana wallet with Solarex loading animation, 12-word seed phrase generation from 20 rotating possibilities, airdrop balance, and non-custodial wallet management." />
+    <meta property="og:title" content="Solarex - Solana Wallet" />
+    <meta property="og:description" content="Mobile-first Solana wallet with Solarex loading animation, 12-word seed phrase generation from 20 rotating possibilities, airdrop balance, and non-custodial wallet management." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.log('SW registration error:', err);
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
+
